@@ -1,110 +1,339 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Para vos</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: radial-gradient(circle at top, #1a1a1a, #000);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Georgia', serif;
-      color: #e6dada;
-      overflow: hidden;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ritual de Alcestis</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 
-    .container {
-      text-align: center;
-    }
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050000; /* Negro profundo casi rojo */
+            color: #e0d0d0;
+            font-family: 'Playfair Display', serif;
+        }
 
-    .heart {
-      width: 120px;
-      height: 120px;
-      position: relative;
-      margin: 0 auto 40px;
-      transform: rotate(-45deg);
-      animation: beat 1.4s infinite ease-in-out;
-    }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-    .heart::before,
-    .heart::after {
-      content: "";
-      width: 120px;
-      height: 120px;
-      background: #8b1e3f;
-      border-radius: 50%;
-      position: absolute;
-    }
+        /* Capa de interfaz y textos */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none; /* Dejar pasar clicks al canvas si es necesario */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
 
-    .heart::before {
-      top: -60px;
-      left: 0;
-    }
+        .dynamic-text {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: #ff4d4d;
+            text-shadow: 0 0 10px rgba(139, 0, 0, 0.8);
+            opacity: 0;
+            margin-top: 250px; /* Espacio para el corazón 3D */
+            max-width: 80%;
+            transition: opacity 0.5s ease;
+        }
 
-    .heart::after {
-      left: 60px;
-      top: 0;
-    }
+        /* La Carta Ritual */
+        #letter-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease;
+        }
 
-    .heart {
-      background: #8b1e3f;
-    }
+        .paper {
+            background: linear-gradient(to bottom, #1a1515, #0f0a0a);
+            border: 1px solid #4a0e0e;
+            padding: 40px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(100, 0, 0, 0.2);
+            position: relative;
+            transform: translateY(20px);
+        }
 
-    @keyframes beat {
-      0%, 100% { transform: scale(1) rotate(-45deg); }
-      50% { transform: scale(1.15) rotate(-45deg); }
-    }
+        .paper::before {
+            content: "†";
+            display: block;
+            text-align: center;
+            font-size: 2rem;
+            color: #500;
+            margin-bottom: 20px;
+        }
 
-    .verse {
-      font-size: 1.2rem;
-      max-width: 280px;
-      line-height: 1.6;
-      opacity: 0;
-      animation: fadeIn 2s forwards;
-    }
+        .paper p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #ccc;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
 
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
+        .paper .signature {
+            text-align: right;
+            font-family: 'Cinzel', serif;
+            color: #800;
+            margin-top: 30px;
+            font-weight: bold;
+        }
 
-    .hint {
-      margin-top: 30px;
-      font-size: 0.8rem;
-      opacity: 0.4;
-    }
-  </style>
+        /* Botón discreto para avanzar */
+        #action-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30%;
+            z-index: 5;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.3;
+            font-family: sans-serif;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="heart"></div>
-    <div class="verse" id="verse"></div>
-    <div class="hint">(cada visita guarda un latido)</div>
-  </div>
 
-  <script>
-    const verses = [
-      "Te pienso sin ruido, y aun así me respondes.",
-      "Mi calma aprendió tu nombre.",
-      "No te busco: apareces.",
-      "Hay algo en vos que el tiempo no toca.",
-      "Si late, es porque sos.",
-      "No prometo eternidad, prometo verdad.",
-      "Tu presencia ordena mis silencios.",
-      "Te elijo incluso cuando no me nombro."
-    ];
+    <div id="canvas-container"></div>
 
-    const saved = localStorage.getItem("uniqueVerse");
+    <div id="ui-layer">
+        <div id="verse-container" class="dynamic-text"></div>
+    </div>
 
-    if (saved) {
-      document.getElementById("verse").innerText = saved;
-    } else {
-      const verse = verses[Math.floor(Math.random() * verses.length)];
-      localStorage.setItem("uniqueVerse", verse);
-      document.getElementById("verse").innerText = verse;
-    }
-  </script>
+    <div id="action-area"></div>
+    <div class="hint">(toca la pantalla para sellar el pacto)</div>
+
+    <div id="letter-overlay">
+        <div class="paper">
+            <p id="final-text"></p>
+            <div class="signature">Eternamente.</div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN THREE.JS (El Mundo 3D) ---
+        const scene = new THREE.Scene();
+        // Niebla rojiza para profundidad
+        scene.fog = new THREE.FogExp2(0x050000, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- CREACIÓN DEL CORAZÓN DE PARTÍCULAS ---
+        const heartGeometry = new THREE.BufferGeometry();
+        const particlesCount = 3000; // Número de partículas
+        const posArray = new Float32Array(particlesCount * 3);
+        const randomArray = new Float32Array(particlesCount * 3); // Posiciones iniciales caóticas
+
+        // Función matemática del corazón 3D
+        function getHeartPosition(t, scale = 1) {
+            // Ecuación paramétrica de un corazón
+            let x = 16 * Math.pow(Math.sin(t), 3);
+            let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+            // Z para darle volumen
+            let z = 10 * Math.cos(t) * Math.sin(t); 
+            return { x: x * scale * 0.5, y: y * scale * 0.5, z: z * scale * 0.2 }; // Ajuste de escala
+        }
+
+        for(let i = 0; i < particlesCount * 3; i+=3) {
+            // Posiciones objetivo (Corazón)
+            // Usamos un ángulo aleatorio para distribuir los puntos
+            let t = Math.random() * Math.PI * 2;
+            let p = getHeartPosition(t, 0.8);
+            
+            // Añadimos un poco de "ruido" aleatorio dentro del corazón para que no sea una línea perfecta
+            let noise = 1.5;
+            posArray[i] = p.x + (Math.random() - 0.5) * noise;
+            posArray[i+1] = p.y + (Math.random() - 0.5) * noise;
+            posArray[i+2] = p.z + (Math.random() - 0.5) * noise;
+
+            // Posiciones iniciales (Caos total en toda la pantalla)
+            randomArray[i] = (Math.random() - 0.5) * 100;
+            randomArray[i+1] = (Math.random() - 0.5) * 100;
+            randomArray[i+2] = (Math.random() - 0.5) * 100;
+        }
+
+        // Atributo personalizado 'position' para Three.js
+        // Empezamos con el array random (caos)
+        heartGeometry.setAttribute('position', new THREE.BufferAttribute(randomArray, 3));
+        heartGeometry.setAttribute('targetPos', new THREE.BufferAttribute(posArray, 3)); // Guardamos el objetivo
+
+        // Material de las partículas
+        const material = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0x8b0000, // Rojo sangre oscuro
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particlesMesh = new THREE.Points(heartGeometry, material);
+        scene.add(particlesMesh);
+
+        // --- ANIMACIÓN DE CAOS A ORDEN ---
+        // Usamos GSAP para interpolar del caos al corazón
+        let transitionObj = { progress: 0 };
+        
+        // Animación inicial: 4 segundos para formarse
+        gsap.to(transitionObj, {
+            progress: 1,
+            duration: 4,
+            ease: "power2.inOut",
+            onUpdate: () => {
+                const positions = particlesMesh.geometry.attributes.position.array;
+                const targets = particlesMesh.geometry.attributes.targetPos.array;
+                const randoms = randomArray;
+
+                for(let i = 0; i < particlesCount * 3; i++) {
+                    // Interpolar entre posición random y posición corazón
+                    positions[i] = randoms[i] + (targets[i] - randoms[i]) * transitionObj.progress;
+                }
+                particlesMesh.geometry.attributes.position.needsUpdate = true;
+            }
+        });
+
+        // --- LATIDO DEL CORAZÓN ---
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.015;
+
+            // Rotación suave constante
+            particlesMesh.rotation.y += 0.002;
+
+            // Efecto Latido (Escala pulsante)
+            if (transitionObj.progress > 0.8) { // Solo late cuando ya casi se formó
+                // Simula un latido cardiaco real (dos golpes: pum-pum)
+                let beat = Math.sin(time * 3) + Math.sin(time * 3 + Math.PI * 0.8) * 0.5;
+                // Normalizamos un poco y aplicamos escala
+                let scale = 1 + (beat * 0.05); 
+                particlesMesh.scale.set(scale, scale, scale);
+                
+                // Brillo sincronizado
+                material.opacity = 0.6 + (beat * 0.2);
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- LÓGICA DE TEXTOS Y RITUAL ---
+        const verses = [
+            "Te pienso sin ruido...",
+            "Y aun así me respondes.",
+            "Mi calma aprendió tu nombre.",
+            "No te busco: apareces.",
+            "Si late, es porque sos.",
+            "Tu presencia ordena mis silencios.",
+            "Te elijo incluso cuando no me nombro."
+        ];
+
+        const verseContainer = document.getElementById('verse-container');
+        let verseIndex = 0;
+
+        // Cambiar frase con el latido (cada 2.5 segundos aprox)
+        setInterval(() => {
+            if (document.getElementById('letter-overlay').style.opacity > 0) return; // Parar si ya se abrió la carta
+
+            gsap.to(verseContainer, { opacity: 0, duration: 0.5, onComplete: () => {
+                verseContainer.innerText = verses[verseIndex];
+                verseIndex = (verseIndex + 1) % verses.length;
+                
+                // Color aleatorio sutil entre blanco y rojo
+                verseContainer.style.color = Math.random() > 0.7 ? "#ff0000" : "#e0d0d0";
+                
+                gsap.to(verseContainer, { opacity: 1, duration: 1 });
+            }});
+        }, 3500);
+
+        // --- INTERACCIÓN FINAL (LA CARTA) ---
+        const finalQuote = "Si la muerte alguna vez te reclamara, yo sería Alcestis:\nme ofrecería sin temblar,\nno por heroicidad,\nsino porque amarte es mi forma más absoluta de existir.";
+        const letterOverlay = document.getElementById('letter-overlay');
+        const finalTextElement = document.getElementById('final-text');
+        const actionArea = document.getElementById('action-area');
+        
+        let isLetterOpen = false;
+
+        actionArea.addEventListener('click', () => {
+            if (isLetterOpen) return;
+            isLetterOpen = true;
+
+            // 1. Desvanecer el texto flotante
+            gsap.to(verseContainer, { opacity: 0, duration: 1 });
+
+            // 2. Acelerar el corazón y expandirlo (clímax)
+            gsap.to(particlesMesh.scale, { x: 5, y: 5, z: 5, duration: 2, ease: "power2.in" });
+            gsap.to(material, { opacity: 0, duration: 2 }); // Desvanecer el corazón
+
+            // 3. Mostrar la carta
+            finalTextElement.innerText = finalQuote;
+            letterOverlay.style.pointerEvents = "auto";
+            
+            setTimeout(() => {
+                gsap.to(letterOverlay, { opacity: 1, duration: 2.5 });
+                
+                // Efecto de tipeo para la carta (opcional, aquí aparece suave)
+                gsap.from(".paper", { y: 50, opacity: 0, duration: 2, delay: 0.5, ease: "power3.out" });
+            }, 1500);
+        });
+
+        // Ajuste de ventana
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
 </body>
 </html>
