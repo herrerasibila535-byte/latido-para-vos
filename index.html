@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Para vos</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: radial-gradient(circle at top, #1a1a1a, #000);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Georgia', serif;
+      color: #e6dada;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    .heart {
+      width: 120px;
+      height: 120px;
+      position: relative;
+      margin: 0 auto 40px;
+      transform: rotate(-45deg);
+      animation: beat 1.4s infinite ease-in-out;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: "";
+      width: 120px;
+      height: 120px;
+      background: #8b1e3f;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    .heart::before {
+      top: -60px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: 60px;
+      top: 0;
+    }
+
+    .heart {
+      background: #8b1e3f;
+    }
+
+    @keyframes beat {
+      0%, 100% { transform: scale(1) rotate(-45deg); }
+      50% { transform: scale(1.15) rotate(-45deg); }
+    }
+
+    .verse {
+      font-size: 1.2rem;
+      max-width: 280px;
+      line-height: 1.6;
+      opacity: 0;
+      animation: fadeIn 2s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .hint {
+      margin-top: 30px;
+      font-size: 0.8rem;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="heart"></div>
+    <div class="verse" id="verse"></div>
+    <div class="hint">(cada visita guarda un latido)</div>
+  </div>
+
+  <script>
+    const verses = [
+      "Te pienso sin ruido, y aun así me respondes.",
+      "Mi calma aprendió tu nombre.",
+      "No te busco: apareces.",
+      "Hay algo en vos que el tiempo no toca.",
+      "Si late, es porque sos.",
+      "No prometo eternidad, prometo verdad.",
+      "Tu presencia ordena mis silencios.",
+      "Te elijo incluso cuando no me nombro."
+    ];
+
+    const saved = localStorage.getItem("uniqueVerse");
+
+    if (saved) {
+      document.getElementById("verse").innerText = saved;
+    } else {
+      const verse = verses[Math.floor(Math.random() * verses.length)];
+      localStorage.setItem("uniqueVerse", verse);
+      document.getElementById("verse").innerText = verse;
+    }
+  </script>
+</body>
+</html>
